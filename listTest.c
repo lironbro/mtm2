@@ -66,15 +66,17 @@ bool listTest(){
 	// list should be [ ]
 
 	// listInsertFirst
-	TEST_EQUALS(final, listInsertFirst(badList, (ListElement*)9999), LIST_NULL_ARGUMENT);
+	int num=1;
+	TEST_EQUALS(final, listInsertFirst(badList, &num), LIST_NULL_ARGUMENT);
 	// TEST_EQUALS(final, listInsertFirst(list, 9999), LIST_OUT_OF_MEMORY); ?
-	TEST_EQUALS(final, listInsertFirst(list, (ListElement*)1), LIST_SUCCESS);
+	TEST_EQUALS(final, listInsertFirst(list, &num), LIST_SUCCESS);
 	// list should be [1-> ]
 
 	// listInsertLast
-	TEST_EQUALS(final, listInsertLast(badList, (ListElement*)9999), LIST_NULL_ARGUMENT);
+	TEST_EQUALS(final, listInsertLast(badList, &num), LIST_NULL_ARGUMENT);
 	// TEST_EQUALS(final, listInsertLast(list, 9999), LIST_OUT_OF_MEMORY); ?
-	TEST_EQUALS(final, listInsertLast(list, (ListElement*)3), LIST_SUCCESS);
+	num=3;
+	TEST_EQUALS(final, listInsertLast(list, &num), LIST_SUCCESS);
 	// list should be [1-> 3-> ]
 	// copy should be [ ]
 
@@ -102,37 +104,44 @@ bool listTest(){
 	// listGetNext
 	TEST_EQUALS(final, listGetNext(emptyList), NULL);
 	TEST_EQUALS(final, listGetNext(badList), NULL);
-	TEST_EQUALS(final, listGetNext(copy), (ListElement*)3);
-	TEST_EQUALS(final, listGetNext(list), (ListElement*)3);
-	TEST_EQUALS(final, listInsertLast(list, (ListElement*)4), LIST_SUCCESS);
-	TEST_EQUALS(final, listGetNext(list), (ListElement*)4);
+	TEST_EQUALS(final, listGetNext(copy), &num);
+	TEST_EQUALS(final, listGetNext(list), &num);
+	num=4;
+	TEST_EQUALS(final, listInsertLast(list, &num), LIST_SUCCESS);
+	TEST_EQUALS(final, listGetNext(list), &num);
 	// list should be [1-> 3-> 4-> ]
 	// copy should be [1-> 3-> ]
 
 
 	// listGetCurrent
+	num=3;
 	TEST_EQUALS(final, listGetCurrent(badList), NULL);
 	TEST_EQUALS(final, listGetCurrent(emptyList), NULL);
-	TEST_EQUALS(final, listGetCurrent(copy), (ListElement*)3);
-	TEST_EQUALS(final, listGetCurrent(list), (ListElement*)4);
+	TEST_EQUALS(final, listGetCurrent(copy), &num);
+	num=4;
+	TEST_EQUALS(final, listGetCurrent(list), &num);
 	// list should be [1-> 3-> 4->]
 	// copy should be [1-> 3-> ]
 
 	// listInsertBeforeCurrent
-	TEST_EQUALS(final, listInsertBeforeCurrent(badList, (ListElement*)9999), LIST_NULL_ARGUMENT);
-	TEST_EQUALS(final, listInsertBeforeCurrent(emptyList, (ListElement*)9999), LIST_INVALID_CURRENT);
+	num=2;
+	TEST_EQUALS(final, listInsertBeforeCurrent(badList, &num), LIST_NULL_ARGUMENT);
+	TEST_EQUALS(final, listInsertBeforeCurrent(emptyList, &num), LIST_INVALID_CURRENT);
 	// TEST_EQUALS(final, listInsertBeforeCurrent(emptyList, 9999), LIST_OUT_OF_MEMORY); ?
-	TEST_EQUALS(final, listInsertBeforeCurrent(copy, (ListElement*)2), LIST_SUCCESS);
+	TEST_EQUALS(final, listInsertBeforeCurrent(copy, &num), LIST_SUCCESS);
 	// list should be [1-> 3-> 4-> ]
 	// copy should be [1-> 2-> 3-> ]
 
 	// listInsertAfterCurrent
-	TEST_EQUALS(final, listInsertAfterCurrent(badList, (ListElement*)500), LIST_NULL_ARGUMENT);
-	TEST_EQUALS(final, listInsertAfterCurrent(emptyList, (ListElement*)500), LIST_INVALID_CURRENT);
+	num=1;
+	TEST_EQUALS(final, listInsertAfterCurrent(badList, &num), LIST_NULL_ARGUMENT);
+	TEST_EQUALS(final, listInsertAfterCurrent(emptyList, &num), LIST_INVALID_CURRENT);
 	// TEST_EQUALS(final, listInsertAfterCurrent(emptyList, 500), LIST_OUT_OF_MEMORY); ?
-	TEST_EQUALS(final, listGetFirst(copy), (ListElement*)1);
-	TEST_EQUALS(final, listInsertAfterCurrent(copy, (ListElement*)2), LIST_SUCCESS);
-	TEST_EQUALS(final, listInsertAfterCurrent(list, (ListElement*)5), LIST_SUCCESS);
+	TEST_EQUALS(final, listGetFirst(copy), &num);
+	num++;
+	TEST_EQUALS(final, listInsertAfterCurrent(copy, &num), LIST_SUCCESS);
+	num=5;
+	TEST_EQUALS(final, listInsertAfterCurrent(list, &num), LIST_SUCCESS);
 	// list should be [1-> 2-> 3-> 4-> 5-> ]
 	// copy should be [1-> 2-> 3-> ]
 
@@ -145,11 +154,13 @@ bool listTest(){
 
 
 	// listSort
+	num=-100;
 	TEST_EQUALS(final, listSort(badList, compareInt), LIST_NULL_ARGUMENT); // needs big checking
 	// TEST_EQUALS(final, listSort(badList, &compareInt), LIST_OUT_OF_MEMORY); ? // needs big checking
 	TEST_EQUALS(final, listSort(list, compareInt), LIST_SUCCESS);
 	// list should be [1-> 2-> 3-> 4-> 5-> ]
 	TEST_EQUALS(final, listInsertLast(list, (ListElement*)-100), LIST_SUCCESS);
+	num=(-1)*num;
 	TEST_EQUALS(final, listInsertFirst(list, (ListElement*)100), LIST_SUCCESS);
 	// list should be [100-> 1-> 2-> 3-> 4-> 5-> -100-> ]
 	TEST_EQUALS(final, listSort(list, &compareInt), LIST_SUCCESS);
