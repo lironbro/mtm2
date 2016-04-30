@@ -49,8 +49,11 @@ void customerDestroy(Customer customer){
 
 MTMResult customerPurchase(Customer customer,
 	Realtor realtor, char* service_name, int apartment_id){
+	ApartmentService service = mapGet(realtor->services, service_name);
 	Apartment apartment;
-	serviceGetById(mapGet(realtor->services, service_name), apartment_id, &apartment);
+	if(service == NULL)
+		return MTM_APARTMENT_SERVICE_DOES_NOT_EXIST;
+	serviceGetById(service, apartment_id, &apartment);
 	if(apartment == NULL)
 		return MTM_APARTMENT_DOES_NOT_EXIST;
 	if(!apartmentCorrectProperties(customer, apartment)){
@@ -60,7 +63,7 @@ MTMResult customerPurchase(Customer customer,
 	customer->total_payment +=
 			apartmentGetPrice(apartment)*(100+realtor->tax_percentage)/100;
 	apartmentDestroy(apartment);	// deletes the copy used for the function
-	serviceDeleteById(mapGet(realtor->services, service_name), apartment_id);
+	serviceDeleteById(service, apartment_id);	// removes apartment from service
 	return MTM_SUCCESS;
 }
 

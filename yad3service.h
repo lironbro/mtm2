@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "apartment_service.h"
+#include "User.h"
 
 /** Type for defining the map */
 typedef struct yad3service_t *yad3service;
@@ -43,6 +44,7 @@ typedef enum choice_t{	// should be accessible to both customer and realtor
 	accept, decline,
 } Choice;
 
+
 // I think this should work
 typedef struct Customer_t* Customer;
 typedef struct Realtor_t* Realtor;
@@ -52,45 +54,46 @@ yad3service yad3serviceCreate(copyMapDataElements copyDataElement, copyMapKeyEle
 		freeMapDataElements freeDataElement, freeMapKeyElements freeKeyElement,
 		compareMapKeyElements compareKeyElements);	// define parameters later ---------------------------
 
-void yad3serviceDestroy();
+void yad3serviceDestroy(yad3service yad3);
 
-MTMResult yad3serviceAddRealtor(char* email, char* company_name, int tax_percentage);
+MTMResult yad3serviceAddRealtor(yad3service yad3,
+		char* email, char* company_name, int tax_percentage);
 
-MTMResult yad3serviceRemoveRealtor(char* email);
+MTMResult yad3serviceRemoveRealtor(yad3service yad3, char* email);
 
 MTMResult yad3serviceRealtorAddApartmentService
-		(char* email, char* service_name, int max_apartments);
+		(yad3service yad3, char* email, char* service_name, int max_apartments);
 
 MTMResult yad3serviceRealterRemoveApartmentService
-		(char* email, char* service_name);
+		(yad3service yad3, char* email, char* service_name);
 
 MTMResult yad3serviceRealtorAddApartment
-		(char* email, char* service_name, int id, int price, int width,
-				int height, char* matrix);
+		(yad3service yad3, char* email, char* service_name,
+				int id, int price, int width, int height, char* matrix);
 
 MTMResult yad3serviceRealtorRemoveApartment
-		(char* email, char* service_name, int id);
+		(yad3service yad3, char* email, char* service_name, int id);
 
 MTMResult yad3serviceAddCustomer
-		(char* email, int min_area, int min_rooms, int max_price);
+		(yad3service yad3, char* email, int min_area, int min_rooms, int max_price);
 
-MTMResult yad3serviceRemoveCustomer(char* email);
+MTMResult yad3serviceRemoveCustomer(yad3service yad3, char* email);
 
 MTMResult yad3serviceCustomerPurchase
-		(char* email, char* realtor_email,
+		(yad3service yad3, char* email, char* realtor_email,
 				char* service_name, int apartment_id);
 
 MTMResult yad3serviceCustomerMakeOffer
-		(char* email, char* realtor_email,
+		(yad3service yad3, char* email, char* realtor_email,
 				char* service_name, int apartment_id, int new_price);
 
 MTMResult yad3serviceRealtorRespondToOffer
-		(char* email, char* customer_email, Choice choise);
+		(yad3service yad3, char* email, char* customer_email, Choice choice);
 
-MTMResult yad3serviceReportRelevantRealtors(char* customer_email);
+MTMResult yad3serviceReportRelevantRealtors(yad3service yad3, char* customer_email);
 
-MTMResult yad3serviceReportMostPayingCustomers(int count);
+MTMResult yad3serviceReportMostPayingCustomers(yad3service yad3, int count);
 
-MTMResult yad3serviceReportSignificantRealtors(int count);
+MTMResult yad3serviceReportSignificantRealtors(yad3service yad3, int count);
 
 #endif /* YAD3SERVICE_H_ */
