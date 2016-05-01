@@ -126,15 +126,20 @@ bool listTest(){
 	TEST_EQUALS(final, *(int*)(listGetCurrent(list)), num);
 	// list should be [1-> 3-> 4->]
 	// copy should be [1-> 3-> ]
+	listPrint(copy);
 
 	// listInsertBeforeCurrent
 	num=2;
 	TEST_EQUALS(final, listInsertBeforeCurrent(badList, &num), LIST_NULL_ARGUMENT);
 	TEST_EQUALS(final, listInsertBeforeCurrent(emptyList, &num), LIST_INVALID_CURRENT);
 	// TEST_EQUALS(final, listInsertBeforeCurrent(emptyList, 9999), LIST_OUT_OF_MEMORY); ?
+	num=3;
+	TEST_EQUALS(final, *(int*)listGetCurrent(copy), num)
+	num=2;
 	TEST_EQUALS(final, listInsertBeforeCurrent(copy, &num), LIST_SUCCESS);
 	// list should be [1-> 3-> 4-> ]
 	// copy should be [1-> 2-> 3-> ]
+	listPrint(copy);
 
 	// listInsertAfterCurrent
 	num=1;
@@ -146,8 +151,9 @@ bool listTest(){
 	TEST_EQUALS(final, listInsertAfterCurrent(copy, &num), LIST_SUCCESS);
 	num=5;
 	TEST_EQUALS(final, listInsertAfterCurrent(list, &num), LIST_SUCCESS);
-	// list should be [1-> 2-> 3-> 4-> 5-> ]
+	// list should be [1-> 3-> 4-> 5-> ]
 	// copy should be [1-> 2-> 3-> ]
+	listPrint(list);
 
 	// listRemoveCurrent
 	TEST_EQUALS(final, listRemoveCurrent(badList), LIST_NULL_ARGUMENT);
@@ -155,7 +161,6 @@ bool listTest(){
 	TEST_EQUALS(final, listRemoveCurrent(copy), LIST_SUCCESS);
 	// list should be [1-> 2-> 3-> 4-> 5-> ]
 	// copy should be [1-> 2-> ]
-
 
 	// listSort
 	num=-100;
@@ -169,6 +174,7 @@ bool listTest(){
 	// list should be [100-> 1-> 2-> 3-> 4-> 5-> -100-> ]
 	TEST_EQUALS(final, listSort(list, compareInt), LIST_SUCCESS);
 	// list should be [-100-> 100-> 1-> 2-> 3-> 4-> 5-> -100-> ]
+	listPrint(list);
 
 	// listFilter
 	List filtered = listFilter(badList, filterInt, (ListFilterKey*)3);

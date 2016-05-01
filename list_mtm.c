@@ -52,8 +52,8 @@ static void nodeSwitch(Node node1, Node node2){
 	if(node1 == NULL || node2 == NULL){
 		return;
 	}
-	Node tmpPrev = node1->previous, tmpNext = node1->next;
-	node1->previous = node2->previous;
+	Node tmpPrev = node1->previous, tmpNext = node1;
+	node1->previous = node2;
 	node1->next = node2->next;
 	node2->previous = tmpPrev;
 	node2->next = tmpNext;
@@ -123,6 +123,10 @@ static void nodeDestroy(Node node, FreeListElement freeElement){
 	}
 	freeElement(node->info);
 	free(node);
+}
+
+static void nodePrint(Node node){
+
 }
 
 // ---------------------------------------------- LIST
@@ -240,6 +244,7 @@ ListResult listInsertLast(List list, ListElement element){
 }
 
 ListResult listInsertBeforeCurrent(List list, ListElement element){
+	listPrint(list);
 	if(list == NULL){
 		return LIST_NULL_ARGUMENT;
 	}
@@ -251,8 +256,11 @@ ListResult listInsertBeforeCurrent(List list, ListElement element){
 	if(node == NULL){
 		return LIST_OUT_OF_MEMORY;
 	}
+	listPrint(list);
 	nodeSetNext(nodeGetPrevious(list->current), node);	// sets the new node between
+	listPrint(list);
 	nodeSetPrevious(list->current, node);	// the previous node and the current one
+	listPrint(list);
 	return LIST_SUCCESS;
 }
 
@@ -268,8 +276,8 @@ ListResult listInsertAfterCurrent(List list, ListElement element){
 	if(node == NULL){
 		return LIST_OUT_OF_MEMORY;
 	}
-	nodeSetNext(list->current, node);	// sets the new node between the previous
 	nodeSetPrevious(nodeGetNext(list->current), node); // node and the Current one
+	nodeSetNext(list->current, node);	// sets the new node between the previous
 	return LIST_SUCCESS;
 }
 
@@ -294,9 +302,15 @@ static void bubble(List list, CompareListElements compareElement){ // part of bu
 	if(list == NULL || list->current == NULL){
 		return;
 	}
-	for(Node iterator = list->current; iterator->next != NULL; iterator = iterator->next){
+	for(Node iterator = list->current; iterator->next != NULL; /*iterator = iterator->next*/){
 		if(compareElement(iterator->info, iterator->next->info) < 0){
+			if(iterator == list->first){
+				list->first=iterator->next;
+			}
 			nodeSwitch(iterator, iterator->next);
+		}
+		else {
+			iterator=iterator->next;
 		}
 	}
 }
