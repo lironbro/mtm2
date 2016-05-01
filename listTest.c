@@ -85,7 +85,6 @@ bool listTest(){
 	TEST_EQUALS(final, listGetSize(NULL), -1);
 	TEST_EQUALS(final, listGetSize(emptyList), 0);
 	TEST_EQUALS(final, listGetSize(list), 2);
-	listPrint(list);
 
 	// listCopy
 	List copy = listCopy(NULL);
@@ -93,7 +92,6 @@ bool listTest(){
 	copy = listCopy(badList);
 	TEST_EQUALS(final, copy, NULL);
 	copy = listCopy(list);
-	listPrint(copy);
 	// list should be [1-> 3-> ]
 	// copy should be [1-> 3-> ]
 
@@ -126,7 +124,6 @@ bool listTest(){
 	TEST_EQUALS(final, *(int*)(listGetCurrent(list)), num);
 	// list should be [1-> 3-> 4->]
 	// copy should be [1-> 3-> ]
-	listPrint(copy);
 
 	// listInsertBeforeCurrent
 	num=2;
@@ -139,7 +136,6 @@ bool listTest(){
 	TEST_EQUALS(final, listInsertBeforeCurrent(copy, &num), LIST_SUCCESS);
 	// list should be [1-> 3-> 4-> ]
 	// copy should be [1-> 2-> 3-> ]
-	listPrint(copy);
 
 	// listInsertAfterCurrent
 	num=1;
@@ -153,7 +149,6 @@ bool listTest(){
 	TEST_EQUALS(final, listInsertAfterCurrent(list, &num), LIST_SUCCESS);
 	// list should be [1-> 3-> 4-> 5-> ]
 	// copy should be [1-> 2-> 3-> ]
-	listPrint(list);
 
 	// listRemoveCurrent
 	TEST_EQUALS(final, listRemoveCurrent(badList), LIST_NULL_ARGUMENT);
@@ -162,6 +157,7 @@ bool listTest(){
 	// list should be [1-> 2-> 3-> 4-> 5-> ]
 	// copy should be [1-> 2-> ]
 
+	// <<<<<<<<<<<<<<<<<<<<< crashes when ypou actually have to allocate some memory
 	// listSort
 	num=-100;
 	TEST_EQUALS(final, listSort(badList, compareInt), LIST_NULL_ARGUMENT); // needs big checking
@@ -173,8 +169,8 @@ bool listTest(){
 	TEST_EQUALS(final, listInsertFirst(list, &num), LIST_SUCCESS);
 	// list should be [100-> 1-> 2-> 3-> 4-> 5-> -100-> ]
 	TEST_EQUALS(final, listSort(list, compareInt), LIST_SUCCESS);
-	// list should be [-100-> 100-> 1-> 2-> 3-> 4-> 5-> -100-> ]
-	listPrint(list);
+	// list should be [-100-> 1-> 2-> 3-> 4-> 5-> 100-> ]	// maybe like this?
+
 
 	// listFilter
 	List filtered = listFilter(badList, filterInt, (ListFilterKey*)3);
@@ -188,7 +184,6 @@ bool listTest(){
 
 	// listClear
 	TEST_EQUALS(final, listClear(NULL), LIST_NULL_ARGUMENT);
-	listPrint(copy);
 	TEST_EQUALS(final, listClear(copy), LIST_SUCCESS);
 	// copy should be []
 

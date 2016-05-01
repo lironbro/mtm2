@@ -27,9 +27,7 @@ struct Node_t{
 // creates a new node
 static Node createNode(ListElement element,
 		Node next, Node previous, CopyListElement copyElement){
-	printf("hello1\n");
-	Node node = malloc(sizeof(*node));
-	printf("hello2\n");
+	Node node = malloc(sizeof(*node));	// <<<<<crashes here in listSort, no idea why
 	if(node == NULL){
 		return NULL;
 	}
@@ -149,7 +147,7 @@ struct List_t{
 
 
 List listCreate(CopyListElement copyElement, FreeListElement freeElement){
-	List list = malloc(sizeof(*list));
+	List list = malloc(sizeof(*list));	// <<<<<<crashes here in listFilter
 	if(list == NULL || copyElement == NULL || freeElement == NULL){
 		free(list);
 		return NULL;
@@ -250,7 +248,6 @@ ListResult listInsertLast(List list, ListElement element){
 }
 
 ListResult listInsertBeforeCurrent(List list, ListElement element){
-	listPrint(list);
 	if(list == NULL){
 		return LIST_NULL_ARGUMENT;
 	}
@@ -262,11 +259,8 @@ ListResult listInsertBeforeCurrent(List list, ListElement element){
 	if(node == NULL){
 		return LIST_OUT_OF_MEMORY;
 	}
-	listPrint(list);
 	nodeSetNext(nodeGetPrevious(list->current), node);	// sets the new node between
-	listPrint(list);
 	nodeSetPrevious(list->current, node);	// the previous node and the current one
-	listPrint(list);
 	return LIST_SUCCESS;
 }
 
@@ -294,10 +288,11 @@ ListResult listRemoveCurrent(List list){
 	if(list->current == NULL){
 		return LIST_INVALID_CURRENT;
 	}
+	// if list has at least 2 nodes and we attempt to remove the first one
+	if(list->current == list->first){	// we need to make sure list->first
+		list->first = list->first->next; // won't be NULL- this does just that
+	}
 
-	if(list->current == list->first){	// if current is the first node in list
-		list->first = list->first->next; // we can't have first be NULL
-	}					// so we move it up to the second element
 	// erases the gap created by deleting the current node
 	nodeSetNext(nodeGetPrevious(list->current), nodeGetNext(list->current));
 	nodeSetPrevious(nodeGetNext(list->current), nodeGetPrevious(list->current));
@@ -311,7 +306,7 @@ static void bubble(List list, CompareListElements compareElement){ // part of bu
 	if(list == NULL || list->current == NULL){
 		return;
 	}
-	for(Node iterator = list->current; iterator->next != NULL; /*iterator = iterator->next*/){
+	for(Node iterator = list->current; iterator->next != NULL;){
 		if(compareElement(iterator->info, iterator->next->info) < 0){
 			if(iterator == list->first){
 				list->first=iterator->next;
@@ -366,18 +361,3 @@ void listDestroy(List list)
 	free(list);
 }
 
-/*static*/ void listPrint(List list){	// used for printing a list of integers for the test
-	FILE* stream = fopen("list1.txt", "w");
-	if(list == NULL){
-		fprintf(stream, "NULL\n");
-		return;
-	}
-	Node originalCurrent = list->current;	// keeps original current
-	fprintf(stream, "\n[");
-	for(listGetFirst(list); list->current != NULL; listGetNext(list)){
-		fprintf(stream, "%d -> ", *(int*)list->current->info);
-	}	// maybe we should mark where the original current was
-	fprintf(stream, "]");
-	list->current = originalCurrent;
-	fclose(stream);
-}
