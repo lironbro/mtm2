@@ -54,13 +54,9 @@ static void nodeSwitch(Node node1, Node node2){
 	if(node1 == NULL || node2 == NULL){
 		return;
 	}
-	Node tmpPrev = node1->previous, tmpNext = node1;
-	node1->previous = node2;
-	node1->next = node2->next;
-	node2->previous = tmpPrev;
-	node2->next = tmpNext;
-	tmpPrev = NULL;
-	tmpNext = NULL;
+	ListElement temp = node1->info;
+	node1->info = node2->info;
+	node2->info = temp;
 }
 
 /*
@@ -126,8 +122,11 @@ static void nodeDestroy(Node node, FreeListElement freeElement){
 		return;
 	}
 	freeElement(node->info);
-	free(node);
 	node->info = NULL;
+	node->next = NULL;
+	node->previous = NULL;
+	free(node);
+
 }
 
 static void nodeDestroyChain(Node node, FreeListElement freeElement){
@@ -148,6 +147,29 @@ struct List_t{
 	FreeListElement freeElement;
 };
 
+// --------------------<Static functions>------------------------
+
+// finds the index of current in the list, without changing it
+int listGetCurrentIndex(List list){
+	Node original_current = list->current;
+	listGetFirst(list);
+	int index = 0;
+	while(list->current != original_current){
+		index++;
+		listGetNext(list);
+	}
+	return index;
+}
+
+static void listSetCurrentToIndex(List list, int index){
+	if(list == NULL || index <0 || listGetFirst(list) == NULL)
+		return;
+	for(listGetFirst(list); index != 0; index--){
+		listGetNext(list);
+	}
+}
+
+// --------------------</Static functions>------------------------
 
 
 List listCreate(CopyListElement copyElement, FreeListElement freeElement){
@@ -304,59 +326,44 @@ ListResult listRemoveCurrent(List list){	// <<<<< big leak here
 	}
 	else{
 	// erases the gap created by deleting the current node
-		printf("\n............................\n");
-		printf("current:: %d", *(int*)listGetCurrent(list));
-		listPrint(list);
 		nodeSetNext(list->current->previous, list->current->next);
 		nodeSetPrevious(list->current->next, list->current->previous);
-		listPrint(list);
-		printf("\n............................\n");
 	}
-	nodeDestroy(list->current, list->freeElement);
+	nodeDestroy(list->current, list->freeElement);	// <<<<< PROBLEM HERE
 	list->current = NULL;
 	return LIST_SUCCESS;
 }
 
-static void bubble(List list, CompareListElements compareElement){ // part of bubble-sort
-	if(list == NULL || list->current == NULL){
-		return;
+
+
+int bubble(List list, CompareListElements compareElement){ // part of bubble-sort
+	if(list == NULL || list->first == NULL){
+		return -1;
 	}
-	for(Node iterator = list->current; iterator->next != NULL;){
-		if(compareElement(iterator->info, iterator->next->info) < 0){
-			if(iterator == list->first){
-				list->first=iterator->next;
-			}
-			nodeSwitch(iterator, iterator->next);
-		}
-		else {
-			iterator=iterator->next;
+	int original_index = listGetCurrentIndex(list), switched = 0;
+	for(listGetFirst(list); list->current->next != NULL; listGetNext(list)){
+		if(compareElement(list->current->info, list->current->next->info) < 0){
+			nodeSwitch(list->current, list->current->next);
+			switched = 1;
 		}
 	}
+	listSetCurrentToIndex(list, original_index);
+	return switched;
 }
 
-// finds the index of current in the list, without changing it
-static int getCurrentIndex(List list){
-	Node original_current = listGetCurrent(list);
-	int index = 0;
-	while(listGetCurrent(list) != original_current){
-		index++;
-		listGetNext(list);
-	}
-	return index;
-}
+
 
 // we were supposed to return LIST_OUT_OF_MEMORY somewhere here, not sure where
 ListResult listSort(List list, CompareListElements compareElement){
 	if(list == NULL || compareElement == NULL){
 		return LIST_NULL_ARGUMENT;
 	}
-	int original_index = getCurrentIndex(list);
+	int original_index = listGetCurrentIndex(list);	// current's original index
 	for(listGetFirst(list); list->current != NULL; listGetNext(list)){
-		bubble(list, compareElement);
+		if(bubble(list, compareElement) == 0)
+			break;
 	}
-	for(listGetFirst(list); original_index != 0; original_index--){
-		listGetNext(list);
-	}
+	listSetCurrentToIndex(list, original_index);
 	return LIST_SUCCESS;
 }
 
@@ -366,7 +373,7 @@ List listFilter(List list, FilterListElement filterElement, ListFilterKey key){
 	}
 	List filtered = listCreate(list->copyElement, list->freeElement);
 	for(listGetFirst(list); list->current != NULL; listGetNext(list)){
-		if(filterElement(nodeGetInfo(list->current), key)){
+		if(filterElement(nodeGetInfo(list->current), key) == true){
 			listInsertLast(filtered, nodeGetInfo(list->current));
 		}
 	}
@@ -394,12 +401,17 @@ void listDestroy(List list)
 }
 
 void listPrint(List list){
-	if(list == NULL)
+	if(list == NULL){
+		printf(">>>> list is NULL\n");
 		return;
+	}
 	Node original_current = list->current;
 	printf(">>>> [");
 	for(listGetFirst(list); list->current != NULL; listGetNext(list)){
-		printf("%d ->", *(int*)(list->current->info));
+		if(list->current == original_current)
+			printf("||%d|| ->", *(int*)(list->current->info));
+		else
+			printf("%d ->", *(int*)(list->current->info));
 	}
 	printf(" ]\n");
 	list->current = original_current;
