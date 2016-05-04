@@ -126,8 +126,9 @@ static void nodeDestroy(Node node, FreeListElement freeElement){
 		return;
 	}
 	freeElement(node->info);
-	free(node);
 	node->info = NULL;
+	free(node);
+
 }
 
 static void nodeDestroyChain(Node node, FreeListElement freeElement){
@@ -304,15 +305,10 @@ ListResult listRemoveCurrent(List list){	// <<<<< big leak here
 	}
 	else{
 	// erases the gap created by deleting the current node
-		printf("\n............................\n");
-		printf("current:: %d", *(int*)listGetCurrent(list));
-		listPrint(list);
 		nodeSetNext(list->current->previous, list->current->next);
 		nodeSetPrevious(list->current->next, list->current->previous);
-		listPrint(list);
-		printf("\n............................\n");
 	}
-	nodeDestroy(list->current, list->freeElement);
+	nodeDestroy(list->current, list->freeElement);	// <<<<< PROBLEM HERE
 	list->current = NULL;
 	return LIST_SUCCESS;
 }
@@ -399,7 +395,10 @@ void listPrint(List list){
 	Node original_current = list->current;
 	printf(">>>> [");
 	for(listGetFirst(list); list->current != NULL; listGetNext(list)){
-		printf("%d ->", *(int*)(list->current->info));
+		if(list->current == original_current)
+			printf("||%d|| ->", *(int*)(list->current->info));
+		else
+			printf("%d ->", *(int*)(list->current->info));
 	}
 	printf(" ]\n");
 	list->current = original_current;
