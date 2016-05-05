@@ -39,7 +39,7 @@ ListElement copyInt(ListElement element){
 	return newInt;
 }
 
-void freeInt(ListElement element){
+void freeInt(ListElement element){	// this might be causing trouble
 	free(element);
 }
 
@@ -48,7 +48,7 @@ int compareInt(ListElement num1, ListElement num2){
 }
 
 bool filterInt(ListElement num, ListFilterKey key){
-	return num >= key;
+	return *(int*)num >= *(int*)key;
 }
 
 bool listTest(){
@@ -189,23 +189,25 @@ bool listTest(){
 	num = 40;
 	TEST_EQUALS(final, listInsertAfterCurrent(copy, &num), LIST_SUCCESS);
 	// copy should be [1-> 20-> 2-> 3-> 40-> ]
-	printf("copy should be [1-> 20-> 2-> 3-> 40-> ]\n");
+	printf("copy should be [1-> 20-> 2-> ||3||-> 40-> ]\n");
 	listPrint(copy);
 
-	// listRemoveCurrent - memory leak is here
+	// listRemoveCurrent
+	printf("\n\n>>>>>listRemoveCurrent<<<<<\n");
 	TEST_EQUALS(final, listRemoveCurrent(badList), LIST_NULL_ARGUMENT);
 	TEST_EQUALS(final, listRemoveCurrent(emptyList), LIST_INVALID_CURRENT);
-	//TEST_EQUALS(final, listRemoveCurrent(copy), LIST_SUCCESS);	// <<<<< BADDDDDD
-	num = -666;	// NOTE TO SELF: there seems to be a big memory leak or something of
-	listGetFirst(copy);	// the sort, after which no nodeCreate function works
-	listInsertAfterCurrent(copy, &num);	// we need to find out where this happens
+	TEST_EQUALS(final, listRemoveCurrent(copy), LIST_SUCCESS);
+	// copy should be [1-> 20-> 2-> 40-> ]\n
+	num = -666;
+	listGetFirst(copy);
+	// copy should be [||1||-> 20-> 2-> 40-> ]
+	TEST_EQUALS(final, listInsertAfterCurrent(copy, &num), LIST_SUCCESS);
+	// copy should be [||1||-> -666-> 20-> 2-> 40-> ]
+	TEST_EQUALS(final, listRemoveCurrent(copy), LIST_SUCCESS);
+	// copy should be [-666-> 20-> 2-> 40-> ]
 	TEST_EQUALS(final, listInsertLast(copy, &num), LIST_SUCCESS);
-	printf("\n\n>>>>>listRemoveCurrent<<<<<\n");
-	// list should be [1-> 3-> 4-> 5-> ]
-	printf("list should be [1-> 3-> 4-> 5->]\n");
-	listPrint(list);
-	// copy should be [-666-> 20-> 2-> 3-> 40-> -666]
-	printf("copy should be [-666-> 20-> 2-> 3-> 40-> -666->]\n");
+	// copy should be [-666-> 20-> 2-> 40-> -666->]
+	printf("copy should be [-666-> 20-> 2-> 40-> -666->]\n");
 	listPrint(copy);
 	TEST_EQUALS(final, listGetCurrent(copy), NULL);
 
@@ -214,46 +216,94 @@ bool listTest(){
 	// listSort
 	printf("\n\n>>>>>listSort<<<<<\n");
 	num=-100;
-	// TEST_EQUALS(final, listSort(badList, compareInt), LIST_NULL_ARGUMENT); // needs big checking
-	// TEST_EQUALS(final, listSort(badList, &compareInt), LIST_OUT_OF_MEMORY); ? // needs big checking
+	TEST_EQUALS(final, listSort(badList,
+			(CompareListElements)compareInt), LIST_NULL_ARGUMENT);
+	TEST_EQUALS(final, listSort(copy, NULL), LIST_NULL_ARGUMENT);
 	printf("list should be [1-> 3-> 4-> 5->]\n");
 	listPrint(list);
 	TEST_EQUALS(final, listInsertLast(list, &num), LIST_SUCCESS);
-	printf("list should be [1-> 3-> 4-> 5-> -100-> ]\n");
-	listPrint(list);
-	TEST_EQUALS(final, listSort(list, compareInt), LIST_SUCCESS);
-	// list should be [-100-> 1-> 3-> 4-> 5-> ]
-	printf("list should be [-100-> 1-> 3-> 4-> 5->]\n");
-	listPrint(list);
-	TEST_EQUALS(final, listInsertLast(list, &num), LIST_SUCCESS);
-	num=(-1)*num;
+	num= 100;
 	TEST_EQUALS(final, listInsertFirst(list, &num), LIST_SUCCESS);
-	// list should be [100-> 1-> 2-> 3-> 4-> 5-> -100-> ]
+	printf("list should be [100-> 1-> 3-> 4-> 5-> -100-> ]\n");
+	listPrint(list);
 	TEST_EQUALS(final, listSort(list, compareInt), LIST_SUCCESS);
-	// list should be [-100-> 1-> 2-> 3-> 4-> 5-> 100-> ]
+	// list should be [-100-> 1-> 3-> 4-> 5-> 100->]
+	printf("list should be [-100-> 1-> 3-> 4-> 5-> 100->]\n");
+	listPrint(list);
+
+	// copy should be [-666-> 20-> 2-> 40-> -666]
+	num= 100;
+	TEST_EQUALS(final, listInsertFirst(copy, &num), LIST_SUCCESS);
+	num= 56;
+	TEST_EQUALS(final, listInsertFirst(copy, &num), LIST_SUCCESS);
+	num= -13;
+	TEST_EQUALS(final, listInsertFirst(copy, &num), LIST_SUCCESS);
+	num= -56;
+	TEST_EQUALS(final, listInsertLast(copy, &num), LIST_SUCCESS);
+	printf("copy should be [13-> 56-> 100-> -666->"
+			" 20-> 2-> 40-> -666-> -56->]\n");
+	listPrint(copy);
+	TEST_EQUALS(final, listSort(copy, compareInt), LIST_SUCCESS);
+	// copy should be [-666-> -666-> -56-> -13-> 2-> 20-> 40-> 56-> 100]
+	printf("copy should be [-666-> -666-> -56-> "
+			"-13-> 2-> 20-> 40-> 56-> 100]\n");
+	listPrint(copy);
 
 
 	// listFilter
-	List filtered = listFilter(badList, filterInt, (ListFilterKey*)3);
+	printf("\n\n>>>>>listFilter<<<<<\n");
+	int key = 3;
+	List filtered = listFilter(badList, filterInt, (ListFilterKey*)&key);
 	// filtered should be NULL
-	filtered = listFilter(list, NULL, (ListFilterKey*)3);
+	printf("filtered should be NULL\n");
+	listPrint(filtered);
+	filtered = listFilter(list, NULL, (ListFilterKey*)&key);
 	// filtered should be NULL
+	printf("filtered should be NULL\n");
+	listPrint(filtered);
 	filtered = listFilter(list, filterInt, NULL);
 	// filtered should be NULL
-	filtered = listFilter(list, filterInt, (ListFilterKey*)3);
-	// filtered should be [100-> 3-> 4-> 5-> ]
+	printf("filtered should be NULL\n");
+	listPrint(filtered);
+	filtered = listFilter(copy, filterInt, (ListFilterKey*)&key);
+	// filtered should be [20-> 40-> 56-> 100-> ]
+	printf("filtered should be [20-> 40-> 56-> 100]\n");
+	listPrint(filtered);
 
 	// listClear
+	printf("\n\n>>>>>listClear<<<<<\n");
 	TEST_EQUALS(final, listClear(NULL), LIST_NULL_ARGUMENT);
 	TEST_EQUALS(final, listClear(copy), LIST_SUCCESS);
 	// copy should be []
+	printf("copy should be []\n");
+	listPrint(copy);
+	TEST_EQUALS(final, listClear(list), LIST_SUCCESS);
+	printf("list should be []\n");
+	listPrint(list);
 
 	// listDestroy
-	listDestroy(list);	// <<<<<<<<< problem here
-	listDestroy(copy);
+	printf("\n\n>>>>>listDestroy<<<<<\n");
+	listDestroy(list);
+	listDestroy(copy);	// <<<<< very bad function
 	listDestroy(filtered);
-	listDestroy(badList);
-	listDestroy(emptyList);
+	listDestroy(badList);	// works on NULL list
+	listDestroy(emptyList);	// doesn't work on empty list
+	emptyList=NULL;
+	list=NULL;
+	copy=NULL;
+	filtered=NULL;
+	badList=NULL;
+	printf("list should be NULL\n");
+	listPrint(list);
+	printf("copy should be NULL\n");
+	listPrint(copy);
+	printf("filtered should be NULL\n");
+	listPrint(filtered);
+	printf("badList should be NULL\n");
+	listPrint(badList);
+	//emptyList=NULL;
+	printf("emptyList should be NULL\n");
+	listPrint(emptyList);
 
 	return final;
 
@@ -263,8 +313,8 @@ bool listTest(){
 
 int main()
 {
-	setvbuf(stdout, NULL, _IONBF, 0);
-	setvbuf(stderr, NULL, _IONBF, 0);
+	//setvbuf(stdout, NULL, _IONBF, 0);
+	//setvbuf(stderr, NULL, _IONBF, 0);
 	RUN_TEST(listTest);
 	return 0;
 }
