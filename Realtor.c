@@ -6,7 +6,8 @@
  */
 
 #include "Realtor.h"
-#include <String.h>
+#include <string.h>
+#include <assert.h>
 
 // ------------------- <General Static functions> -------------------
 
@@ -15,26 +16,39 @@ static bool intIsInRange(int num, int min, int max){
 }
 
 
-static void str_free(char* str){
+static void strFree(char* str){
 	free(str);
 }
 
 static SquareType** translateMatrix(int width, int height, char* matrix){
-	SquareType** result = malloc(height*width*sizeof(SquareType));
+	SquareType** result = malloc(height*sizeof(SquareType*));
 	if(result == NULL)
 		return NULL;
 	for(int i=0; i<height; i++){
+		result[i]=malloc(width*sizeof(SquareType));
 		for(int j=0; j<width; j++){
 			if(*(matrix+i*width+j) == 'w'){
+				//printf("\n%p\n", (void*)result[i*width+j]);
 				result[i][j] = WALL;
 			}	// I intentionally didn't use an else statement
 			if(*(matrix+i*width+j) == 'e'){	// because I'm afraid it might
-				result[i][j] = EMPTY;	// leave the array's bounds or something
+				result[i][j] = EMPTY;	// leaves the array's bounds or something
 			}
 		}
 	}
 	return result;
 }
+static char* string_copy(char* string)
+{
+	int len=strlen(string);
+	char* copy = malloc(len*sizeof(char*)+1);
+	memset(copy, '\0', len);
+	strcpy(copy, string);
+	return copy;
+}
+
+char*(*strptr)(char*) = string_copy;
+
 // ------------------- </General Static functions> -------------------
 
 
@@ -63,30 +77,40 @@ static bool serviceExists(Realtor realtor, char* service_name){
 	return mapContains(realtor->services, service_name);
 }
 
-
-
 // Functions -------------------
 
 Realtor realtorCreate(char* company_name, int tax_percentage){
-	if(!intIsInRange(tax_percentage, 1, 100)){
+	if(!intIsInRange(tax_percentage, 1, 100) || company_name==NULL || !strcmp(company_name, "")){
 		return NULL;
 	}
 	Realtor realtor = malloc(sizeof(*realtor));
 	if(realtor == NULL){
 		return NULL;
 	}
-	strcpy(realtor->company_name, company_name);// this might fail badly
+	//ApartmentService (*copy)(ApartmentService service) = serviceCopy;
+	int len = strlen(company_name);
+	realtor->company_name=malloc((sizeof(char*))*len+1);
+	strcpy(realtor->company_name, company_name);
 	realtor->tax_percentage = tax_percentage;	// please check ^^^^
-	realtor->services = mapCreate(serviceCopy, strcpy, serviceDestroy
-			, str_free, strcmp);
-	realtor->offers = mapCreate(offerCopy, strcpy, offerDestroy,
-			str_free, strcmp);
+	realtor->services = mapCreate((copyMapDataElements)serviceCopy, (copyMapKeyElements)strptr,
+			(freeMapDataElements)serviceDestroy, (freeMapKeyElements)strFree, (compareMapKeyElements)strcmp);
+	if(realtor->services==NULL){
+		return NULL;
+	}
+	realtor->offers = mapCreate((copyMapDataElements)offerCopy, (copyMapKeyElements)strptr,
+			(freeMapDataElements)offerDestroy, (freeMapKeyElements)strFree, (compareMapKeyElements)strcmp);
 	return realtor;
 }
 
 Realtor realtorCopy(Realtor realtor){
+	if(realtor==NULL){
+		return NULL;
+	}
 	Realtor copy =
 			realtorCreate(realtor->company_name, realtor->tax_percentage);
+	if(copy==NULL){
+		return NULL;
+	}
 	MAP_FOREACH(char*, i, realtor->services){
 		mapPut(copy->services, i, mapGet(realtor->services, i));
 	}
@@ -98,6 +122,7 @@ Realtor realtorCopy(Realtor realtor){
 
 void realtorDestroy(Realtor realtor){
 	mapDestroy(realtor->services);
+	mapDestroy(realtor->offers);
 	free(realtor->company_name);
 	free(realtor);
 }
@@ -105,9 +130,19 @@ void realtorDestroy(Realtor realtor){
 
 
 realtorResult realtorAddService(Realtor realtor, char* service_name, int max_apartments){
-	if(serviceExists(realtor, service_name))
+	if(realtor==NULL || service_name==NULL || max_apartments==0){
+		return REALTOR_NULL_ARGUMENT;
+	}
+	if(max_apartments<0){
+		return REALTOR_INVALID_PARAMETERS;
+	}
+	if(serviceExists(realtor, service_name)){
 		return REALTOR_APARTMENT_SERVICE_ALREADY_EXISTS;
+	}
 	ApartmentService newService = serviceCreate(max_apartments);
+	if(newService==NULL){
+		return REALTOR_OUT_OF_MEMORY;
+	}
 	mapPut(realtor->services, service_name, newService);
 	return REALTOR_SUCCESS;
 }
@@ -121,31 +156,45 @@ realtorResult realtorRemoveService(Realtor realtor, char* service_name){
 
 realtorResult realtorAddApartment(Realtor realtor, char* service_name,
 		int id, int price, int width, int height, char* matrix){
+	if(strlen(matrix)!=(width*height) || id<0 || price<=0
+			|| width<=0 || height<=0){
+			return REALTOR_INVALID_PARAMETERS;
+		}
 	if(!serviceExists(realtor, service_name))
 		return REALTOR_APARTMENT_SERVICE_DOES_NOT_EXIST;
 	SquareType** squares = translateMatrix(width, height, matrix);
-	if(squares == NULL)
+	if(squares == NULL){
 		return REALTOR_OUT_OF_MEMORY;
+	}
 	Apartment apartment = apartmentCreate(squares, height, width, price);
-	if(apartment == NULL)
+	if(apartment == NULL){
 		return REALTOR_OUT_OF_MEMORY;
-	ApartmentServiceResult result =
-			serviceAddApartment(mapGet(realtor->services, service_name), apartment, id);
-	if(result == APARTMENT_SERVICE_FULL)
-		return REALTOR_APARTMENT_SERVICE_FULL;
-	if(result == APARTMENT_SERVICE_ALREADY_EXISTS)
+	}
+	ApartmentServiceResult result = serviceAddApartment(mapGet(realtor \
+			->services,service_name), apartment, id);
+	if(result == APARTMENT_SERVICE_ALREADY_EXISTS){
 		return REALTOR_APARTMENT_ALREADY_EXISTS;
+	}
+	if(result == APARTMENT_SERVICE_FULL){
+		return REALTOR_APARTMENT_SERVICE_FULL;
+	}
 	return REALTOR_SUCCESS;
 }
 
 realtorResult realtorRemoveApartment(Realtor realtor, char* service_name, int id){
+	if(realtor==NULL || service_name==NULL){
+		return REALTOR_NULL_ARGUMENT;
+	}
+	if(!strcmp(service_name, "") || id<=0){
+		return REALTOR_INVALID_PARAMETERS;
+	}
 	if(!serviceExists(realtor, service_name))
 		return REALTOR_APARTMENT_SERVICE_DOES_NOT_EXIST;
 	ApartmentServiceResult result =
 			serviceDeleteById(mapGet(realtor->services, service_name), id);
 	if(result == APARTMENT_SERVICE_NO_FIT)
 		return REALTOR_APARTMENT_DOES_NOT_EXIST;
-	return APARTMENT_SUCCESS;
+	return REALTOR_SUCCESS;
 }
 
 // needs to make the purchase itself

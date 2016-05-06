@@ -38,7 +38,7 @@ struct Customer_t{
 };
 
 Customer customerCreate(int min_area, int min_rooms, int max_price){
-	if(min_area <= 0 || min_rooms <= 0 || max_price <= 0)
+	if(min_area < 0 || min_rooms < 0 || max_price < 0)
 		return NULL;
 	Customer customer = malloc(sizeof(*customer));
 	customer->min_area = min_area;
@@ -68,7 +68,7 @@ customerResult customerPurchase(Customer customer,
 	Apartment apartment;
 	if(service == NULL)
 		return CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST;
-	serviceGetById(service, apartment_id, &apartment);	// creates a >>COPY<<
+	serviceGetById(service, apartment_id, &apartment);
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
 	if(!apartmentCorrectProperties(customer, apartment)){
@@ -94,12 +94,13 @@ customerResult customerMakeOffer(Customer customer, Realtor realtor, int id, int
 	if(!mapContains(realtorGetServices(realtor), service_name))
 		return CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST;
 	Apartment apartment;
-	serviceGetById(mapGet(realtorGetServices(realtor), service_name), id, &apartment);
+	serviceGetById(mapGet(realtorGetServices(realtor), service_name),
+			id, &apartment);
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
 	if(!apartmentCorrectProperties(customer, apartment))
 		return CUSTOMER_REQUEST_WRONG_PPROPERTIES;
-	if(apartmentGetPrice(apartment) > price)	// not sure if I got the instruction right
+	if(apartmentGetPrice(apartment) <= price)	// not sure if I got the instruction right
 		return CUSTOMER_REQUEST_ILLOGICAL_PRICE;		// <<<< about this error
 	Offer offer = offerCreate(id, price, service_name);
 	mapPut(realtorGetOffers(realtor), customer_email, offer);
@@ -123,5 +124,4 @@ int customerGetMaxPrice(Customer customer){
 int customerGetTotalPayment(Customer customer){
 	return customer->total_payment;
 }
-
 

@@ -10,12 +10,12 @@
 
 
 #include "Realtor.h"	// this is valid, customer knows realtor but no vice versa
+#include "map.h"
 
 typedef struct Customer_t* Customer;
 
 typedef enum customerResult_t {
-	CUSTOMER_INVALID_PARAMETERS,
-	CUSTOMER_PURCHASE_WRONG_PROPERTIES,
+	CUSTOMER_PURCHASE_WRONG_PROPERTIES,	// Customer errors
 	CUSTOMER_ALREADY_REQUESTED,
 	CUSTOMER_REQUEST_WRONG_PROPERTIES,
 	CUSTOMER_REQUEST_ILLOGICAL_PRICE,

@@ -20,6 +20,7 @@ static int str_length(char* str){
 	return count;
 }
 
+// Needs to be deleted? unnecessary function.
 static char* str_copy(char* source, char* destination){
 	free(destination);	// not sure if this is legal
 	destination = malloc(sizeof(char)*(1+str_length(source)));
@@ -54,7 +55,10 @@ Offer offerCreate(int id, int price, char* service_name){
 	Offer offer = malloc(sizeof(*offer));
 	offer->id = id;
 	offer->price = price;
-	offer->service_name = str_copy(service_name, offer->service_name);	// check this shit out
+	int length=strlen(service_name)+1;
+	offer->service_name = malloc(length);
+	memset(offer->service_name, '0', length);
+	strcpy(offer->service_name, service_name);	// check this shit out
 	return offer;
 }
 
