@@ -14,9 +14,9 @@
 static bool apartmentCorrectProperties(Customer customer, Apartment apartment){
 	if(apartment == NULL || customer == NULL)
 		return false;
-	return apartmentTotalArea(apartment) >= customerGetMinArea(customer) &&
-			apartmentGetPrice(apartment) <= customerGetMaxPrice(customer) &&
-			apartmentNumOfRooms(apartment) >= customerGetMinRooms(customer);
+	return !(apartmentTotalArea(apartment) < customerGetMinArea(customer) ||
+			apartmentGetPrice(apartment) > customerGetMaxPrice(customer) ||
+			apartmentNumOfRooms(apartment) < customerGetMinRooms(customer));
 }
 // ------------------- </General Static functions> -------------------
 
@@ -38,7 +38,7 @@ struct Customer_t{
 };
 
 Customer customerCreate(int min_area, int min_rooms, int max_price){
-	if(min_area <= 0 || min_rooms <= 0 || max_price <= 0)
+	if(min_area < 0 || min_rooms < 0 || max_price < 0)
 		return NULL;
 	Customer customer = malloc(sizeof(*customer));
 	customer->min_area = min_area;
@@ -65,10 +65,10 @@ customerResult customerPurchase(Customer customer,
 	Realtor realtor, char* service_name, int apartment_id){
 	ApartmentService service =
 			mapGet(realtorGetServices(realtor), service_name);
-	Apartment apartment = NULL;
+	Apartment apartment;
 	if(service == NULL)
 		return CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST;
-	serviceGetById(service, apartment_id, &apartment);	// creates a >>COPY<<
+	serviceGetById(service, apartment_id, &apartment);
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
 	if(!apartmentCorrectProperties(customer, apartment)){
@@ -87,26 +87,21 @@ customerResult customerPurchase(Customer customer,
 // an almost duplication of parameters, them being "customer"
 // and "customer_email", couldn't figure how to cut out one of them
 // so I left it as is
-customerResult customerMakeOffer(Customer customer, Realtor realtor,
-		char* service_name, char* customer_email, int id, int price){
-
+customerResult customerMakeOffer(Customer customer, Realtor realtor, int id, int price,
+		char* service_name, char* customer_email){
 	if(mapContains(realtorGetOffers(realtor), customer_email))
 		return CUSTOMER_ALREADY_REQUESTED;
-
 	if(!mapContains(realtorGetServices(realtor), service_name))
 		return CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST;
-
 	Apartment apartment;
-	serviceGetById(mapGet(realtorGetServices(realtor), service_name), id, &apartment);
+	serviceGetById(mapGet(realtorGetServices(realtor), service_name),
+			id, &apartment);
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
-
 	if(!apartmentCorrectProperties(customer, apartment))
-		return CUSTOMER_REQUEST_WRONG_PROPERTIES;
-
-	if(apartmentGetPrice(apartment) < price)
-		return CUSTOMER_REQUEST_ILLOGICAL_PRICE;
-
+		return CUSTOMER_REQUEST_WRONG_PPROPERTIES;
+	if(apartmentGetPrice(apartment) <= price)	// not sure if I got the instruction right
+		return CUSTOMER_REQUEST_ILLOGICAL_PRICE;		// <<<< about this error
 	Offer offer = offerCreate(id, price, service_name);
 	mapPut(realtorGetOffers(realtor), customer_email, offer);
 	customer->total_payment += price;
@@ -129,5 +124,4 @@ int customerGetMaxPrice(Customer customer){
 int customerGetTotalPayment(Customer customer){
 	return customer->total_payment;
 }
-
 

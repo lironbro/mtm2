@@ -1,7 +1,7 @@
 /*
  * Realtor.c
  *
- *  Created on: 28  2016
+ *  Created on: 28 באפר׳ 2016
  *      Author: Liron
  */
 
@@ -173,9 +173,11 @@ realtorResult realtorAddApartment(Realtor realtor, char* service_name,
 	ApartmentServiceResult result = serviceAddApartment(mapGet(realtor \
 			->services,service_name), apartment, id);
 	if(result == APARTMENT_SERVICE_ALREADY_EXISTS){
+		apartmentDestroy(apartment);
 		return REALTOR_APARTMENT_ALREADY_EXISTS;
 	}
 	if(result == APARTMENT_SERVICE_FULL){
+		apartmentDestroy(apartment);
 		return REALTOR_APARTMENT_SERVICE_FULL;
 	}
 	return REALTOR_SUCCESS;
@@ -210,33 +212,45 @@ realtorResult realtorRespondToOffer(Realtor realtor, char* customer_email, Choic
 	return REALTOR_SUCCESS;
 }
 
-bool realtorIsRealtorRelevant(Realtor realtor, int customer_min_area, int customer_min_rooms, int customer_max_price){
-	if(realtor == NULL)
-		return REALTOR_NULL_ARGUMENT;
+bool realtorIsRealtorRelevant(Realtor realtor, int customer_min_area,
+		int customer_min_rooms, int customer_max_price){
+	if(realtor == NULL){
+		return false;
+	}
+	if(customer_min_area<=0 || customer_min_rooms<=0
+			|| customer_max_price<=0){
+		return false;
+	}
+	Apartment apartment=NULL;
 	for(char* iterator = mapGetFirst(realtor->services);
 			iterator != NULL; iterator = mapGetNext(realtor->services)){
-		if(serviceSearch(mapGet(realtor->services, iterator),
+		ApartmentServiceResult res = serviceSearch(mapGet(realtor->services, iterator),
 				customer_min_area, customer_min_rooms,
-				customer_max_price, NULL)
-				== APARTMENT_SERVICE_SUCCESS)
+				customer_max_price, &apartment);
+		if(res == APARTMENT_SERVICE_SUCCESS)
 			return true;
 	}
+	apartmentDestroy(apartment);
 	return false;
 }
 
 char* realtorGetCompanyName(Realtor realtor){
+	assert(realtor!=NULL);
 	return realtor->company_name;
 }
 
 int realtorGetTaxPercentage(Realtor realtor){
+	assert(realtor!=NULL);
 	return realtor->tax_percentage;
 }
 
 Map realtorGetOffers(Realtor realtor){
+	assert(realtor!=NULL);
 	return realtor->offers;
 }
 
 Map realtorGetServices(Realtor realtor){
+	assert(realtor!=NULL);
 	return realtor->services;
 }
 
@@ -256,7 +270,7 @@ int realtorGetAverageMedianPrice(Realtor realtor){
 	int total = 0;
 	MAP_FOREACH(char*, current, realtor->services){
 		int median = 0;
-		total += servicePriceMedian(mapGet(realtor->services, current), &median);
+		servicePriceMedian(mapGet(realtor->services, current), &median);
 		total += median;
 	}
 	return total / realtorGetTotalApartmentNumber(realtor);

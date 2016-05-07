@@ -10,12 +10,12 @@
 
 
 #include "Realtor.h"	// this is valid, customer knows realtor but no vice versa
+#include "map.h"
 
 typedef struct Customer_t* Customer;
 
 typedef enum customerResult_t {
-	CUSTOMER_INVALID_PARAMETERS,
-	CUSTOMER_PURCHASE_WRONG_PROPERTIES,
+	CUSTOMER_PURCHASE_WRONG_PROPERTIES,	// Customer errors
 	CUSTOMER_ALREADY_REQUESTED,
 	CUSTOMER_REQUEST_WRONG_PROPERTIES,
 	CUSTOMER_REQUEST_ILLOGICAL_PRICE,
@@ -23,6 +23,7 @@ typedef enum customerResult_t {
 	CUSTOMER_SUCCESS,
 	CUSTOMER_OUT_OF_MEMORY,
 	CUSTOMER_NULL_ARGUMENT,
+	CUSTOMER_REQUEST_WRONG_PPROPERTIES,
 	CUSTOMER_APARTMENT_DOES_NOT_EXIST,
 	CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST
 } customerResult;
@@ -36,8 +37,8 @@ void customerDestroy(Customer customer);
 customerResult customerPurchase(Customer customer,
 	Realtor realtor, char* service_name, int apartment_id);
 
-customerResult customerMakeOffer(Customer customer, Realtor realtor,
-		char* service_name, char* customer_email, int id, int price);
+customerResult customerMakeOffer(Customer customer, Realtor realtor, int id,
+		int price, char* service_name, char* customer_email);
 
 int customerGetMinArea(Customer customer);
 

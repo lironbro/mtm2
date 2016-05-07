@@ -13,9 +13,10 @@
 #include <stdbool.h>
 #include "Offer.h"
 #include "map.h"
-#include "list.h"
+//#include "list.h"
 #include "set.h"
 #include "apartment_service.h"
+#include "apartment.h"
 
 
 typedef struct Realtor_t* Realtor;
@@ -29,6 +30,7 @@ typedef enum realtorResult_t{
 	REALTOR_INVALID_PARAMETERS,	// Realtor errors
 	REALTOR_EMAIL_ALREADY_EXISTS,
 	REALTOR_EMAIL_DOES_NOT_EXIST,
+	REALTOR_EMAIL_WRONG_ACCOUNT_TYPE,
 	REALTOR_APARTMENT_SERVICE_ALREADY_EXISTS,
 	REALTOR_APARTMENT_SERVICE_DOES_NOT_EXIST,
 	REALTOR_APARTMENT_SERVICE_FULL,
