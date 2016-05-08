@@ -1,7 +1,7 @@
 /*
  * Realtor.c
  *
- *  Created on: 28 2016
+ *  Created on: 28 באפר׳ 2016
  *      Author: Liron
  */
 
@@ -48,6 +48,13 @@ static char* string_copy(char* string)
 }
 
 char*(*strptr)(char*) = string_copy;
+
+
+static void freeSquares(SquareType** squares, int height){
+	for(int i=0; i<height; i++){
+		free(squares[i]);
+	}
+}
 
 // ------------------- </General Static functions> -------------------
 
@@ -144,6 +151,7 @@ realtorResult realtorAddService(Realtor realtor, char* service_name, int max_apa
 		return REALTOR_OUT_OF_MEMORY;
 	}
 	mapPut(realtor->services, service_name, newService);
+	serviceDestroy(newService);
 	return REALTOR_SUCCESS;
 }
 
@@ -170,16 +178,23 @@ realtorResult realtorAddApartment(Realtor realtor, char* service_name,
 	if(apartment == NULL){
 		return REALTOR_OUT_OF_MEMORY;
 	}
-	ApartmentServiceResult result = serviceAddApartment(mapGet(realtor \
-			->services,service_name), apartment, id);
+	ApartmentServiceResult result = serviceAddApartment(
+			mapGet(realtor->services,service_name), apartment, id);
 	if(result == APARTMENT_SERVICE_ALREADY_EXISTS){
+		freeSquares(squares, height);
+		free(squares);
 		apartmentDestroy(apartment);
 		return REALTOR_APARTMENT_ALREADY_EXISTS;
 	}
 	if(result == APARTMENT_SERVICE_FULL){
+		freeSquares(squares, height);
+		free(squares);
 		apartmentDestroy(apartment);
 		return REALTOR_APARTMENT_SERVICE_FULL;
 	}
+	freeSquares(squares, height);
+	free(squares);
+	apartmentDestroy(apartment);
 	return REALTOR_SUCCESS;
 }
 
@@ -227,8 +242,10 @@ bool realtorIsRealtorRelevant(Realtor realtor, int customer_min_area,
 		ApartmentServiceResult res = serviceSearch(mapGet(realtor->services, iterator),
 				customer_min_area, customer_min_rooms,
 				customer_max_price, &apartment);
-		if(res == APARTMENT_SERVICE_SUCCESS)
+		if(res == APARTMENT_SERVICE_SUCCESS){
+			apartmentDestroy(apartment);
 			return true;
+		}
 	}
 	apartmentDestroy(apartment);
 	return false;
