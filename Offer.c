@@ -9,37 +9,6 @@
 
 // ------------------- <General static functions> -------------------
 
-/*static int str_length(char* str){
-	if(str == NULL)
-		return -1;
-	int count = 0;
-	while(*str){
-		str++;
-		count++;
-	}
-	return count;
-}*/
-
-// Needs to be deleted? unnecessary function.
-/*static char* str_copy(char* source, char* destination){
-	free(destination);	// not sure if this is legal
-	destination = malloc(sizeof(char)*(1+str_length(source)));
-	if(destination == NULL){
-		return NULL;
-	}
-	int i = 0;
-	while(*(source+i)){
-		*(destination+i) = *(source+i);
-		i++;
-	}
-	*(destination+i) = *(source+i);	// places the '/0' at the end, needs checking
-	return destination;
-}*/
-
-
-
-
-
 // ------------------- </General static functions> -------------------
 
 

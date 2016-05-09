@@ -18,6 +18,13 @@ static bool apartmentCorrectProperties(Customer customer, Apartment apartment){
 			apartmentGetPrice(apartment) > customerGetMaxPrice(customer) ||
 			apartmentNumOfRooms(apartment) < customerGetMinRooms(customer));
 }
+
+static bool offerCorrectProperties(Customer customer, Apartment apartment,
+		int new_price){
+	return new_price <= customerGetMaxPrice(customer) &&
+			apartmentTotalArea(apartment) >= customerGetMinArea(customer) &&
+			apartmentNumOfRooms(apartment) >= customerGetMinRooms(customer);
+}
 // ------------------- </General Static functions> -------------------
 
 
@@ -65,10 +72,10 @@ customerResult customerPurchase(Customer customer,
 	Realtor realtor, char* service_name, int apartment_id){
 	ApartmentService service =
 			mapGet(realtorGetServices(realtor), service_name);
-	Apartment apartment;
+	Apartment apartment = NULL;
 	if(service == NULL)
 		return CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST;
-	serviceGetById(service, apartment_id, &apartment);
+	serviceGetById(service, apartment_id, &apartment);	// creates a >>COPY<<
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
 	if(!apartmentCorrectProperties(customer, apartment)){
@@ -98,8 +105,8 @@ customerResult customerMakeOffer(Customer customer, Realtor realtor, int id, int
 			id, &apartment);
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
-	if(!apartmentCorrectProperties(customer, apartment))
-		return CUSTOMER_REQUEST_WRONG_PPROPERTIES;
+	if(!offerCorrectProperties(customer, apartment, price))
+		return CUSTOMER_REQUEST_WRONG_PROPERTIES;
 	if(apartmentGetPrice(apartment) <= price)	// not sure if I got the instruction right
 		return CUSTOMER_REQUEST_ILLOGICAL_PRICE;		// <<<< about this error
 	Offer offer = offerCreate(id, price, service_name);
