@@ -11,21 +11,63 @@
 
 // ------------------- <General Static functions> -------------------
 
+
 /*
- * Checks if the given apartment
+ * checkValidProperties: checks that the given properties fit the customer
+ *
+ * @param customer_max_price: max price for customer
+ * @param customer_min_area: min area for customer
+ * @param customer_min_rooms: min rooms for customer
+ * @param price: the price being checked
+ * @param rooms: the rooms being checked
+ * @param area: the area being checked
+ */
+static bool checkValidProperties(int customer_max_price, int customer_min_area,
+		int customer_min_rooms, int price, int rooms, int area){
+	return area >= customer_min_area &&
+			price <= customer_max_price &&
+			rooms >= customer_min_rooms;
+}
+
+/*
+ * apartmentCorrectProperties: checks that an apartment has correct properties
+ * 							   for a given customer
+ *
+ * @param customer: the customer for whom the apartment is being bought
+ * @param apartment: the apartment being bought
+ *
+ * returns:
+ * true if apartment fits the customer
+ * false otherwise
+ */
+static bool apartmentCorrectProperties(Customer customer, Apartment apartment){
+	if(apartment == NULL || customer == NULL)
+		return false;
+	return checkValidProperties(customerGetMaxPrice(customer),
+			customerGetMinArea(customer), customerGetMinRooms(customer),
+			apartmentGetPrice(apartment), apartmentNumOfRooms(apartment),
+			apartmentTotalArea(apartment));
+}
+
+/*
+ * offerCorrectProperties: checks that an offer has correct properties.
+ *
+ * @param customer: the customer for whom the apartment is being offered
+ * @param apartment: the apartment being offered
+ * @param new_price: the price being set for the apartment in the offer
+ *
+ * returns:
+ * true if apartment fits the customer
+ * false otherwise
  */
 static bool offerCorrectProperties(Customer customer, Apartment apartment,
-		int new_price, bool checkOffer){
-	bool correct;
-	if(checkOffer){
-		correct = new_price <= customerGetMaxPrice(customer);
-	}
-	else{
-		correct = apartmentGetPrice(apartment) <= customerGetMaxPrice(customer);
-	}
-	return correct &&
-			apartmentTotalArea(apartment) >= customerGetMinArea(customer) &&
-			apartmentNumOfRooms(apartment) >= customerGetMinRooms(customer);
+		int new_price){
+	if(customer == NULL || apartment == NULL)
+		return false;
+	return checkValidProperties(customerGetMaxPrice(customer),
+			customerGetMinArea(customer), customerGetMinRooms(customer),
+			new_price, apartmentNumOfRooms(apartment),
+			apartmentTotalArea(apartment));
 }
 // ------------------- </General Static functions> -------------------
 
@@ -68,27 +110,30 @@ void customerDestroy(Customer customer){
 	free(customer);
 }
 
+
+
 customerResult customerPurchase(Customer customer,
-	Realtor realtor, char* service_name, int apartment_id){
+		Realtor realtor, char* service_name, int apartment_id){
 	ApartmentService service =
 			mapGet(realtorGetServices(realtor), service_name);
 	Apartment apartment = NULL;
 	if(service == NULL)
 		return CUSTOMER_APARTMENT_SERVICE_DOES_NOT_EXIST;
-	serviceGetById(service, apartment_id, &apartment);
+	serviceGetById(service, apartment_id, &apartment);	// creates a >>COPY<<
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
-	if(!offerCorrectProperties(customer, apartment, 0, false)){
+	if(!apartmentCorrectProperties(customer, apartment)){
 		apartmentDestroy(apartment);
 		return CUSTOMER_PURCHASE_WRONG_PROPERTIES;
 	}
 	customer->total_payment +=
 			apartmentGetPrice(apartment)*
 			(100+realtorGetTaxPercentage(realtor))/100;
-	apartmentDestroy(apartment);
-	serviceDeleteById(service, apartment_id);
+	apartmentDestroy(apartment);	// deletes the copy used for the function
+	serviceDeleteById(service, apartment_id); // removes apartment from service
 	return CUSTOMER_SUCCESS;
 }
+
 
 customerResult customerMakeOffer(Customer customer, Realtor realtor,
 		char* service_name, char* customer_email, int id, int price){
@@ -101,11 +146,11 @@ customerResult customerMakeOffer(Customer customer, Realtor realtor,
 			id, &apartment);
 	if(apartment == NULL)
 		return CUSTOMER_APARTMENT_DOES_NOT_EXIST;
-	if(!offerCorrectProperties(customer, apartment, price, true)){
+	if(!offerCorrectProperties(customer, apartment, price)){
 		apartmentDestroy(apartment);
 		return CUSTOMER_REQUEST_WRONG_PROPERTIES;
 	}
-	if(apartmentGetPrice(apartment) <= price){
+	if(apartmentGetPrice(apartment) < price){
 		apartmentDestroy(apartment);
 		return CUSTOMER_REQUEST_ILLOGICAL_PRICE;
 	}
@@ -113,7 +158,7 @@ customerResult customerMakeOffer(Customer customer, Realtor realtor,
 	mapPut(realtorGetOffers(realtor), customer_email, offer);
 	offerDestroy(offer);
 	customer->total_payment += price;
-	apartmentDestroy(apartment);
+	apartmentDestroy(apartment); // apartment is a copy and needs to be erased
 	return CUSTOMER_SUCCESS;
 }
 

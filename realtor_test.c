@@ -1,7 +1,7 @@
 /*
  * Test.c
  *
- *  Created on: 5 במאי 2016
+ *  Created on: 5 2016
  *      Author: Zivkr
  */
 
@@ -109,21 +109,21 @@ bool firstTest()
 		// REALTOR RESPOND TO OFFER //
 	Customer customer = customerCreate(5, 1, 2500);
 	TEST_NOT_EQUALS(final, customer, NULL);
-	TEST_EQUALS(final, customerMakeOffer(customer, realtor1, "a_first",
-			"dumb_customer", 1, 1150), CUSTOMER_SUCCESS);
+	TEST_EQUALS(final, customerMakeOffer(customer, realtor1, "a_first", 1, 1150,
+			"dumb_customer"), CUSTOMER_SUCCESS);
 	TEST_EQUALS(final, realtorRespondToOffer(realtor1, "wise_customer", accept),
 			REALTOR_NOT_REQUESTED);
 	TEST_EQUALS(final, realtorRespondToOffer(realtor1, "dumb_customer",
 			decline), REALTOR_SUCCESS);
-	TEST_EQUALS(final, customerMakeOffer(customer, realtor1, "a_first",
-			"dumb_customer", 1, 1150), CUSTOMER_SUCCESS);
+	TEST_EQUALS(final, customerMakeOffer(customer, realtor1, 1, 1150, "a_first",
+			"dumb_customer"), CUSTOMER_SUCCESS);
 	TEST_EQUALS(final, realtorRespondToOffer(realtor1, "dumb_customer",
 			accept), REALTOR_SUCCESS);
 	//Adding the apartment again:
 	result = realtorAddApartment(realtor1, "a_first", 1, price,
 				width, height, matrix);
 	TEST_EQUALS(final, result, REALTOR_SUCCESS);
-	customerMakeOffer(customer, realtor1, "a_first","dumb_customer", 1, 1150);
+	customerMakeOffer(customer, realtor1, 1, 1150, "a_first","dumb_customer");
 
 		// REALTOR IS REALTOR RELEVANT //
 	TEST_EQUALS(final, realtorIsRealtorRelevant(NULL, 1, 1, 1), false);
@@ -188,6 +188,7 @@ bool firstTest()
 
 
 		// REALTOR DESTROY //
+	realtorDestroy(NULL);
 	realtorDestroy(realtor1);
 	realtorDestroy(realtor2);
 	realtorDestroy(realtor3);
@@ -199,7 +200,7 @@ bool firstTest()
 }
 
 
-int main()
+int main3()
 {
 	RUN_TEST(firstTest);
 

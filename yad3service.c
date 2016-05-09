@@ -12,27 +12,42 @@
 
 // ------------------- <General Static functions> -------------------
 
+/*
+ * emailIsValid: checks if the email is valid, meaning it contains a '@'
+ */
 static bool emailIsValid(char* email){
+	bool one_present = false;
 	while(*email){
-		if(*email == '@'){
-			return true;
+		if(*email == '@' && !one_present){
+			one_present = true;
+		}
+		else if(*email == '@' && one_present){
+			return false;
 		}
 		email++;
 	}
-	return false;
+	return one_present;
 }
 
+/*
+ * intIsInRange: checks if num is between min and max (inclusive)
+ */
 static bool intIsInRange(int num, int min, int max){
 	return num>=min && num<= max;
 }
 
-static void str_free(char* str){
+/*
+ * strFree: frees a string
+ */
+static void strFree(char* str){
 	free(str);
 }
 
-
-static int getBestCustomer(yad3service yad3){
-	int max = 0;
+/*
+ * getBestCustomerPayment: returns the customer who has payed the most
+ */
+static int getBestCustomerPayment(yad3service yad3){
+	int max = -1;
 	MAP_FOREACH(char*, current, yad3serviceGetEmails(yad3)){
 		User user = mapGet(yad3serviceGetEmails(yad3), current);
 		if(userGetType(user) == realtor)
@@ -45,14 +60,20 @@ static int getBestCustomer(yad3service yad3){
 
 }
 
+/*
+ * realtorCalculateScore: calculates the realtor's score by the given formula
+ */
 static int realtorCalculateScore(Realtor realtor){
 	return 1000000*realtorGetTotalApartmentNumber(realtor)+
 			realtorGetAverageMedianPrice(realtor)+
 			100000*realtorGetAverageMedianArea(realtor);
 }
 
-static int getBestRealtor(yad3service yad3){
-	int max = 0;
+/*
+ * getBestRealtorScore: returns the realtor with the biggest score
+ */
+static int getBestRealtorScore(yad3service yad3){
+	int max = -1;
 	MAP_FOREACH(char*, current, yad3serviceGetEmails(yad3)){
 		User user = mapGet(yad3serviceGetEmails(yad3), current);
 		if(userGetType(user) == customer)
@@ -65,6 +86,9 @@ static int getBestRealtor(yad3service yad3){
 	return max;
 }
 
+/*
+ * resultUserToYad3: converts a userResult to the corresponding yad3Result
+ */
 static yad3Result resultUserToYad3(userResult result){
 	switch(result){
 	case USER_INVALID_PARAMETERS:
@@ -122,6 +146,21 @@ static yad3Result resultUserToYad3(userResult result){
 	}
 }
 
+/*
+ * yad3RemoveUser: removes the user with the given email and type from the
+ * 			yad3 service
+ *
+ * @param yad3: the service from which the user will be removed
+ * @param email: the email address of the user
+ * @param type: the type of the user
+ *
+ * returns:
+ * YAD3_SUCCESS if the user has been removed successfully
+ * YAD3_INVALID_PARAMETERS if a wrong parameter has been sent
+ * YAD3_EMAIL_DOES_NOT_EXIST if there is no user with the given email address
+ * YAD3_EMAIL_WRONG_ACCOUNT_TYPE if the user with the given address is of
+ * 			a different type
+ */
 static yad3Result yad3RemoveUser(yad3service yad3, char* email, userType type){
 	if(yad3 == NULL || yad3serviceGetEmails(yad3) == NULL ||
 			!emailIsValid(email))
@@ -135,7 +174,10 @@ static yad3Result yad3RemoveUser(yad3service yad3, char* email, userType type){
 	return YAD3_SUCCESS;
 }
 
-static char* yad3Copy(const char* str){
+/*
+ * strCopy: copies a string and returns the copy
+ */
+static char* strCopy(const char* str){
 	int len = strlen(str);
 	char* result = malloc(sizeof(char*)*(len+1));
 	if(result==NULL){
@@ -169,8 +211,8 @@ yad3service yad3serviceCreate()
 		return NULL;
 	}
 	yad3->userEmails = mapCreate((copyMapDataElements)userCopy,
-			(copyMapKeyElements)yad3Copy, (freeMapDataElements)userDestroy,
-			(freeMapKeyElements)str_free, (compareMapKeyElements)strcmp);
+			(copyMapKeyElements)strCopy, (freeMapDataElements)userDestroy,
+			(freeMapKeyElements)strFree, (compareMapKeyElements)strcmp);
 	if(yad3->userEmails == NULL){
 		return NULL;
 	}
@@ -206,7 +248,7 @@ yad3Result yad3serviceRemoveRealtor(yad3service yad3, char* email){
 }
 
 yad3Result yad3serviceRealtorAddApartmentService
-		(yad3service yad3, char* email, char* service_name, int max_apartments){
+(yad3service yad3, char* email, char* service_name, int max_apartments){
 	if(yad3 == NULL || !emailIsValid(email) || max_apartments <= 0)
 		return YAD3_INVALID_PARAMETERS;
 	if(!mapContains(yad3->userEmails, email))
@@ -216,7 +258,7 @@ yad3Result yad3serviceRealtorAddApartmentService
 }
 
 yad3Result yad3serviceRealterRemoveApartmentService
-		(yad3service yad3, char* email, char* service_name){
+(yad3service yad3, char* email, char* service_name){
 	if(yad3 == NULL || !emailIsValid(email))
 		return YAD3_INVALID_PARAMETERS;
 	if(!mapContains(yad3->userEmails, email))
@@ -226,8 +268,8 @@ yad3Result yad3serviceRealterRemoveApartmentService
 }
 
 yad3Result yad3serviceRealtorAddApartment
-		(yad3service yad3, char* email, char* service_name,
-				int id, int price, int width, int height, char* matrix){
+(yad3service yad3, char* email, char* service_name,
+		int id, int price, int width, int height, char* matrix){
 	if(yad3 == NULL || !emailIsValid(email) || id < 0 || matrix == NULL)
 		return YAD3_INVALID_PARAMETERS;
 	if(!mapContains(yad3->userEmails, email))
@@ -237,7 +279,7 @@ yad3Result yad3serviceRealtorAddApartment
 }
 
 yad3Result yad3serviceRealtorRemoveApartment
-		(yad3service yad3, char* email, char* service_name, int id){
+(yad3service yad3, char* email, char* service_name, int id){
 	if(yad3 == NULL || !emailIsValid(email) || id < 0)
 		return YAD3_INVALID_PARAMETERS;
 	if(!mapContains(yad3->userEmails, email))
@@ -247,7 +289,8 @@ yad3Result yad3serviceRealtorRemoveApartment
 }
 
 yad3Result yad3serviceAddCustomer
-		(yad3service yad3, char* email, int min_area, int min_rooms, int max_price){
+(yad3service yad3, char* email, int min_area, int min_rooms,
+		int max_price){
 	if(yad3 == NULL || !emailIsValid(email) || min_area <= 0
 			|| min_rooms <= 0 || max_price <= 0)
 		return YAD3_INVALID_PARAMETERS;
@@ -264,8 +307,8 @@ yad3Result yad3serviceRemoveCustomer(yad3service yad3, char* email){
 }
 
 yad3Result yad3serviceCustomerPurchase
-		(yad3service yad3, char* email, char* realtor_email,
-				char* service_name, int apartment_id){
+(yad3service yad3, char* email, char* realtor_email,
+		char* service_name, int apartment_id){
 	if(yad3 == NULL || !emailIsValid(email) ||
 			!emailIsValid(realtor_email) || apartment_id < 0)
 		return YAD3_INVALID_PARAMETERS;
@@ -278,8 +321,8 @@ yad3Result yad3serviceCustomerPurchase
 }
 
 yad3Result yad3serviceCustomerMakeOffer
-		(yad3service yad3, char* email, char* realtor_email,
-				char* service_name, int apartment_id, int new_price){
+(yad3service yad3, char* email, char* realtor_email,
+		char* service_name, int apartment_id, int new_price){
 	if(yad3 == NULL || !emailIsValid(email) ||
 			!emailIsValid(realtor_email) || apartment_id < 0 || new_price <= 0)
 		return YAD3_INVALID_PARAMETERS;
@@ -292,7 +335,7 @@ yad3Result yad3serviceCustomerMakeOffer
 }
 
 yad3Result yad3serviceRealtorRespondToOffer
-		(yad3service yad3, char* email, char* customer_email, Choice choice){
+(yad3service yad3, char* email, char* customer_email, Choice choice){
 	if(yad3 == NULL || !emailIsValid(email) ||
 			!emailIsValid(customer_email))
 		return YAD3_INVALID_PARAMETERS;
@@ -305,8 +348,10 @@ yad3Result yad3serviceRealtorRespondToOffer
 }
 
 
-yad3Result yad3serviceReportRelevantRealtors(yad3service yad3, char* customer_email){
-	if(yad3 == NULL || yad3->userEmails == NULL)
+yad3Result yad3serviceReportRelevantRealtors(yad3service yad3,
+		char* customer_email, FILE* output){
+	if(yad3 == NULL || yad3->userEmails == NULL ||
+			!emailIsValid(customer_email))
 		return YAD3_INVALID_PARAMETERS;
 	if(!mapContains(yad3->userEmails, customer_email))
 		return YAD3_EMAIL_DOES_NOT_EXIST;
@@ -314,89 +359,101 @@ yad3Result yad3serviceReportRelevantRealtors(yad3service yad3, char* customer_em
 	if(userGetType(user) != customer){
 		return YAD3_EMAIL_WRONG_ACCOUNT_TYPE;
 	}
-	Customer customer = (Customer)(userGetData(user));	// <<<< check this casting
-	List relevant_emails = listCreate((CopyListElement)yad3Copy,
-			(FreeListElement)str_free);	// <<<needs checking
+	Customer customer = (Customer)(userGetData(user));
+	List relevant_emails = listCreate((CopyListElement)strCopy,
+			(FreeListElement)strFree);
 	Map emails = yad3->userEmails;
-	for(char* iterator = mapGetFirst(emails);
-			iterator != NULL; iterator = mapGetNext(emails)){
+
+	MAP_FOREACH(char*, iterator, emails){
 		if(userIsRealtorRelevant(mapGet(emails, iterator), customer))
-			listInsertLast(relevant_emails, iterator);
+			listInsertLast(relevant_emails, iterator);	// <<<<< TURNS TO NULL???
 	}
-	FILE* output = fopen("output.txt", "w");
+
 	listSort(relevant_emails, (CompareListElements)strcmp);
-	for(listGetFirst(relevant_emails); listGetCurrent(relevant_emails) != NULL;
-			listGetNext(relevant_emails)){
-		Realtor realtor = mapGet(yad3->userEmails,
-				listGetCurrent(relevant_emails));
-		mtmPrintRealtor(output, listGetCurrent(relevant_emails),
-				realtorGetCompanyName(realtor));
-		realtorDestroy(realtor);
+
+	LIST_FOREACH(char*, current, relevant_emails){
+		Realtor realtor = (Realtor)userGetData(mapGet(yad3->userEmails, current));
+		mtmPrintRealtor(output, current, realtorGetCompanyName(realtor));
 	}
+	listDestroy(relevant_emails);
 	return YAD3_SUCCESS;
 }
 
-// should work, other than printing equal customers by address
-yad3Result yad3serviceReportMostPayingCustomers(yad3service yad3, int count){
+yad3Result yad3serviceReportMostPayingCustomers(yad3service yad3, int count,
+		FILE* output){
 	if(yad3 == NULL || count <= 0)
 		return YAD3_INVALID_PARAMETERS;
 	Map best_customers = mapCreate((copyMapDataElements)customerCopy,
-			(copyMapKeyElements)yad3Copy, (freeMapDataElements)customerDestroy,
-			(freeMapKeyElements)str_free, (compareMapKeyElements)strcmp);
-	FILE* output = fopen("output.txt", "w");	// will be written here (?)
+			(copyMapKeyElements)strCopy, (freeMapDataElements)customerDestroy,
+			(freeMapKeyElements)strFree, (compareMapKeyElements)strcmp);
+	List best_emails = listCreate((CopyListElement)strCopy,
+			(FreeListElement)strFree);
 	for(mapGetFirst(yad3->userEmails); count > 0; count--){
-		int max = getBestCustomer(yad3);
-		if(max == 0)
+		int max = getBestCustomerPayment(yad3);
+		if(max == -1)
 			break;
-		MAP_FOREACH(char*, j, yad3->userEmails){
-			User user = mapGet(yad3->userEmails, j);
+		MAP_FOREACH(char*, iterator, yad3->userEmails){
+			User user = mapGet(yad3->userEmails, iterator);
 			if(userGetType(user) == realtor)
 				continue;
 			Customer customer = (Customer)userGetData(user);
 			if(customerGetTotalPayment(customer) == max){
-				mtmPrintCustomer(output, j, customerGetTotalPayment(customer));
-				mapPut(best_customers, j, customer);
-				mapRemove(yad3->userEmails, j);
+				mtmPrintCustomer(output, iterator,
+						customerGetTotalPayment(customer));
+				listInsertLast(best_emails, iterator);
+				mapPut(best_customers, iterator, customer);
+				mapRemove(yad3->userEmails, iterator);
 				break;
 			}
 		}
 	}
-	MAP_FOREACH(char*, i, best_customers){
-		mapPut(yad3->userEmails, i, mapGet(best_customers, i));
+	listSort(best_emails, (CompareListElements)strcmp);
+
+	LIST_FOREACH(char*, iterator, best_emails){
+		User customer = userCustomerCopy(
+				mapGet(best_customers, listGetCurrent(best_emails)));
+		mapPut(yad3->userEmails, iterator, customer);
 	}
 	mapDestroy(best_customers);
+	listDestroy(best_emails);
 	return YAD3_SUCCESS;
 }
 
-// should work, other than printing equal customers by address
-yad3Result yad3serviceReportSignificantRealtors(yad3service yad3, int count){
+yad3Result yad3serviceReportSignificantRealtors(yad3service yad3, int count,
+		FILE* output){
 	if(yad3 == NULL || count <= 0)
 		return YAD3_INVALID_PARAMETERS;
-	FILE* output = fopen("output.txt", "w");
 	Map best_realtors = mapCreate((copyMapDataElements)realtorCopy,
-			(copyMapKeyElements)yad3Copy, (freeMapDataElements)realtorDestroy,
-			(freeMapKeyElements)str_free, (compareMapKeyElements)strcmp);
+			(copyMapKeyElements)strCopy, (freeMapDataElements)realtorDestroy,
+			(freeMapKeyElements)strFree, (compareMapKeyElements)strcmp);
+	List best_emails = listCreate((CopyListElement)strCopy,
+		(FreeListElement)strFree);
 	for(mapGetFirst(yad3->userEmails); count > 0; count--){
-		int max = getBestRealtor(yad3);
-		if(max == 0)
+		int max = getBestRealtorScore(yad3);
+		if(max == -1)
 			break;
-		MAP_FOREACH(char*, j, yad3->userEmails){
-			User user = mapGet(yad3->userEmails, j);
+		MAP_FOREACH(char*, iterator, yad3->userEmails){
+			User user = mapGet(yad3->userEmails, iterator);
 			if(userGetType(user)!= realtor)
 				continue;
 			Realtor realtor = (Realtor)userGetData(user);
 			if(realtorCalculateScore(realtor) == max){
-				mtmPrintRealtor(output, j, realtorGetCompanyName(realtor));	// <<<< define file
-				mapPut(best_realtors, j, realtor);
-				mapRemove(yad3->userEmails, j);
+				listInsertLast(best_emails, iterator);
+				mtmPrintRealtor(output, iterator,
+						realtorGetCompanyName(realtor));
+				mapPut(best_realtors, iterator, realtor);
+				mapRemove(yad3->userEmails, iterator);
 				break;
 			}
 		}
 	}
-	MAP_FOREACH(char*, i, best_realtors){
-		mapPut(yad3->userEmails, i, mapGet(best_realtors, i));
+	LIST_FOREACH(char*, iterator, best_emails){
+		User realtor = userRealtorCopy(mapGet(
+				best_realtors, listGetCurrent(best_emails)));
+		mapPut(yad3->userEmails, iterator, realtor);
 	}
 	mapDestroy(best_realtors);
+	listDestroy(best_emails);
 	return YAD3_SUCCESS;
 }
 
